@@ -54,6 +54,7 @@ of the non-obvious decisions:
 | `genres` / `production_countries` (stringified lists) | Exploded into `titles_genres` / `titles_countries` long-format tables | Needed for per-genre/per-country aggregation; empty-list titles (59 / 229) excluded only from the exploded tables, not the main one |
 | `id` dedupe check | Verified 0 duplicates | Integrity check, not a fix |
 | `credits` duplicate `(id, person_id, role)` groups (173 rows) | Kept as-is | Legitimate double-credits (different character names), not data errors |
+| `production_countries` had 1 title tagged with the literal text `"Lebanon"` instead of the ISO code `"LB"` | Normalized to `"LB"` | Genuine data-entry inconsistency — merges into the other 39 Lebanese titles instead of forming its own bogus one-title "country" |
 
 Cleaned outputs live in `data/cleaned/` and are loaded into `netflix.db` as `titles_cleaned`,
 `titles_genres`, `titles_countries`, and `credits_cleaned` (raw `titles`/`credits` tables remain
@@ -96,7 +97,9 @@ No Tableau/Power BI — [`notebooks/dashboard.ipynb`](notebooks/dashboard.ipynb)
 file from `sql/` directly against `netflix.db` and renders the result with matplotlib, so every
 chart traces back to an actual query rather than logic re-built in a separate GUI tool. Organized
 the same way the original 3-page plan was (Overview / Ratings / People); eleven individual PNGs
-land in `dashboard/`, and six headline panels are assembled into one image:
+land in `dashboard/`, and six headline panels are assembled into one image. Country panels are
+labeled with full country names, not raw ISO codes — no legend needed to decode `KR` as South
+Korea:
 
 ![Netflix content analysis dashboard](dashboard/dashboard.png)
 
