@@ -3,7 +3,7 @@
 An end-to-end analysis of Netflix's catalog (titles + credits) to explore content trends,
 ratings, genres, countries, and cast/crew performance — using pandas, SQL, and a BI dashboard.
 
-**Status:** Phases 0–1 (setup, cleaning) complete. SQL analysis, deep-dive, and dashboard phases in progress.
+**Status:** Phases 0–2 (setup, cleaning, SQL analysis) complete. Deep-dive and dashboard phases in progress.
 
 ## Data Source
 
@@ -29,6 +29,20 @@ of the non-obvious decisions:
 Cleaned outputs live in `data/cleaned/` and are loaded into `netflix.db` as `titles_cleaned`,
 `titles_genres`, `titles_countries`, and `credits_cleaned` (raw `titles`/`credits` tables remain
 for auditing).
+
+## SQL Analysis (Phase 2)
+
+Ten queries in [`sql/`](sql/), each with a business question and rationale in a header comment,
+run against the cleaned tables in `netflix.db`. A few standout findings:
+
+| # | Query | Finding |
+|---|---|---|
+| 02 | Top genres by rating (≥1,000 votes, ≥20 titles) | `history` (7.19) and `war` (7.18) rate highest; `documentation` close behind at 7.17 |
+| 04 | Top countries by rating (≥20 rated titles) | South Korea (7.23) and Japan (6.97) outrate the US/UK despite smaller catalogs |
+| 05 | Runtime vs. IMDb score correlation (movies) | Pearson r ≈ 0.11 — essentially no relationship; longer ≠ better-rated |
+| 06 | IMDb vs. TMDb score gap | Biggest disagreements cluster in kids' content (e.g. *Word Party Songs*, *Thomas & Friends*) — IMDb skews adult, TMDb skews family-audience |
+| 07 | Top directors (3+ titles) | Kim Won-seok (8.43), Christopher Nolan (8.33), Martin Scorsese (8.16) |
+| 08 | Movies vs. shows avg rating | Shows outrate movies on both IMDb (6.98 vs 6.25) and TMDb (7.48 vs 6.46) — tested for significance in Phase 3 |
 
 ## Project Structure
 
@@ -58,7 +72,7 @@ The SQLite database (`netflix.db`) is built from the raw CSVs via `load_to_sqlit
 
 - [x] Phase 0 — Repo setup, raw data loaded into SQLite
 - [x] Phase 1 — Data cleaning (genre/country explode, null handling, dedupe, decade column)
-- [ ] Phase 2 — SQL analysis (8–10 queries)
+- [x] Phase 2 — SQL analysis (10 queries)
 - [ ] Phase 3 — Pandas deep-dive (stats tests, time series, actor network)
 - [ ] Phase 4 — Dashboard (Tableau/Power BI)
 - [ ] Phase 5 — Write-up (findings, methodology, caveats)
