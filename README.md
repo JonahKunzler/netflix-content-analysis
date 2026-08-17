@@ -1,12 +1,38 @@
 # Netflix Content Strategy & Performance Analysis
 
-An end-to-end analysis of Netflix's catalog (titles + credits) to explore content trends,
-ratings, genres, countries, and cast/crew performance — deliberately kept SQL- and Python-native
-end to end, with no BI tool in the stack: the dashboard is matplotlib rendering the actual `.sql`
-query files, not a separate GUI layer duplicating logic already written in SQL.
+If I were advising Netflix's content team, this is the analysis I'd want on my desk before a
+content-investment conversation: what's actually working, broken down by format, genre, country,
+and talent — backed by significance testing, not just averages that could be noise. Built
+entirely in SQL and Python against Netflix's public July 2022 catalog snapshot (5,850 titles,
+77,801 cast/crew credits, US-facing) — no BI tool anywhere in the stack; the dashboard below is
+matplotlib rendering the project's own `.sql` files, not logic re-built in a separate GUI layer.
 
-**Status:** Phases 0–4 (setup, cleaning, SQL analysis, pandas deep-dive, SQL-driven dashboard)
-complete. Write-up in progress.
+**Status:** All 5 phases complete (setup, cleaning, SQL analysis, pandas deep-dive, SQL-driven
+dashboard, write-up).
+
+## Key Findings
+
+1. **Shows are a meaningfully safer rating bet than movies, not just a statistically-significant
+   one.** Shows average 6.98 IMDb vs. movies' 6.25 — a Welch's t-test puts that at p ≈ 1.2e-114
+   with Cohen's d = 0.66, a genuine medium-to-large effect on ~5,400 rated titles, not an artifact
+   of a huge sample turning a trivial gap into "significant."
+2. **Runtime is not a lever for movie quality.** Pearson r ≈ 0.11 between movie runtime and IMDb
+   score — essentially no relationship. Don't greenlight or budget on "longer reads as more
+   prestigious"; it doesn't show up in the ratings.
+3. **Two of the platform's smallest catalogs are its highest-rated: South Korea (7.23 avg IMDb,
+   197 rated titles) and Japan (6.97, 259 titles) both meaningfully outrate the US (6.53, 2,163
+   titles) and UK (6.80, 378 titles)** — a real quality signal for deepening investment in those
+   markets, not just a volume story.
+4. **History, war, and documentary content rates highest** (7.19 / 7.18 / 7.17 avg IMDb, minimum
+   1,000 votes and 20 titles to filter noise) **— ahead of the genres that dominate the catalog by
+   volume**, drama (2,968 titles, 6.77 avg) and comedy (2,325 titles). Volume and quality aren't
+   the same axis.
+5. **IMDb and TMDb disagree most sharply on kids' content** — gaps up to 6.6 points on titles like
+   *Word Party Songs* and *Thomas & Friends*. A single external "rating" doesn't capture family
+   content well; it needs its own quality bar, not an adult-audience benchmark.
+
+*(Full derivations for each of these live in the phase sections below, with the exact SQL/notebook
+that produced them.)*
 
 ## Data Source
 
@@ -41,7 +67,7 @@ run against the cleaned tables in `netflix.db`. A few standout findings:
 | # | Query | Finding |
 |---|---|---|
 | 02 | Top genres by rating (≥1,000 votes, ≥20 titles) | `history` (7.19) and `war` (7.18) rate highest; `documentation` close behind at 7.17 |
-| 04 | Top countries by rating (≥20 rated titles) | South Korea (7.23) and Japan (6.97) outrate the US/UK despite smaller catalogs |
+| 04 | Top countries by rating (≥20 rated titles) | South Korea (7.23, 197 titles) and Japan (6.97, 259 titles) outrate the US (6.53, 2,163 titles) and UK (6.80, 378 titles) despite far smaller catalogs |
 | 05 | Runtime vs. IMDb score correlation (movies) | Pearson r ≈ 0.11 — essentially no relationship; longer ≠ better-rated |
 | 06 | IMDb vs. TMDb score gap | Biggest disagreements cluster in kids' content (e.g. *Word Party Songs*, *Thomas & Friends*) — IMDb skews adult, TMDb skews family-audience |
 | 07 | Top directors (3+ titles) | Kim Won-seok (8.43), Christopher Nolan (8.33), Martin Scorsese (8.16) |
@@ -83,6 +109,43 @@ land in `dashboard/`, and six headline panels are assembled into one image:
 | Movie vs. show rating | `sql/08_movie_vs_show_avg_rating.sql` |
 | Top actors by title count | `sql/03_top_prolific_actors_directors.sql` |
 
+## Methodology
+
+1. **Clean in pandas, document every non-obvious decision** (Phase 1) — nulls are never silently
+   dropped; each one is either a structural non-applicability (`seasons` for movies), an explicit
+   category (`'Not Rated'`), or a flag column for downstream filtering (`has_any_rating`,
+   `runtime_is_missing`). Cleaned tables load into `netflix.db` alongside the untouched raw ones.
+2. **Answer real business questions in SQL** (Phase 2) — 10 queries, each opening with a
+   comment block naming the business question and why it matters, with explicit noise filters
+   (minimum vote/title-count thresholds) rather than letting small samples produce misleading
+   rankings.
+3. **Take the highest-stakes findings further with statistics** (Phase 3) — a SQL aggregate saying
+   "shows rate higher" isn't the same claim as "the difference isn't noise"; Welch's t-test +
+   Cohen's d answers the second question, not just the first.
+4. **Visualize without adding a new source of truth** (Phase 4) — the dashboard renders the exact
+   `.sql` files from Phase 2, so a chart and a query can never silently drift apart the way a
+   hand-configured BI tool and its source query can.
+
+Tools: Python 3.12, pandas, SQLite, scipy (stats), matplotlib, networkx (co-starring network). No
+BI tool, no cloud warehouse — everything runs from a `git clone` + `pip install -r requirements.txt`.
+
+## What I'd Do With More Data or Time
+
+- **Viewership data.** Ratings measure critical/audience reception, not what Netflix's own
+  algorithm and subscribers actually watched — the real content-investment signal (watch-hours,
+  completion rate) isn't in this dataset at all.
+- **A global catalog, not a US-facing one.** Every country finding here reflects what's licensed
+  or produced for the US catalog specifically — a Korean or Japanese title's US-catalog rating
+  isn't necessarily representative of its performance in its home market or globally.
+- **A current snapshot.** This data stops at July 2022; the genre/decade trends in Phase 3 are
+  real but now describe a multi-year-old catalog, not today's.
+- **Significance-test more of the Phase 2 findings**, not just the movie-vs-show gap — e.g. is
+  Korea's rating edge over the US statistically robust, or resting on a 197-title sample that
+  happens to skew high?
+- **Turn the pipeline into a refresh job.** `load_to_sqlite.py` → cleaning → SQL → dashboard is
+  already a repeatable sequence; scheduling it against a live/updated data source would turn this
+  from a one-time analysis into a monitoring tool.
+
 ## Project Structure
 
 ```
@@ -114,7 +177,7 @@ The SQLite database (`netflix.db`) is built from the raw CSVs via `load_to_sqlit
 - [x] Phase 2 — SQL analysis (10 queries)
 - [x] Phase 3 — Pandas deep-dive (stats tests, time series, actor network)
 - [x] Phase 4 — Dashboard (SQL-driven, matplotlib — no BI tool)
-- [ ] Phase 5 — Write-up (findings, methodology, caveats)
+- [x] Phase 5 — Write-up (findings, methodology, caveats)
 
 ## Caveats
 
