@@ -1,10 +1,12 @@
 # Netflix Content Strategy & Performance Analysis
 
 An end-to-end analysis of Netflix's catalog (titles + credits) to explore content trends,
-ratings, genres, countries, and cast/crew performance — using pandas, SQL, and a BI dashboard.
+ratings, genres, countries, and cast/crew performance — deliberately kept SQL- and Python-native
+end to end, with no BI tool in the stack: the dashboard is matplotlib rendering the actual `.sql`
+query files, not a separate GUI layer duplicating logic already written in SQL.
 
-**Status:** Phases 0–3 (setup, cleaning, SQL analysis, pandas deep-dive) complete. Phase 4 data
-prep done, dashboard build/publish pending. Write-up in progress.
+**Status:** Phases 0–4 (setup, cleaning, SQL analysis, pandas deep-dive, SQL-driven dashboard)
+complete. Write-up in progress.
 
 ## Data Source
 
@@ -64,13 +66,22 @@ Three Phase 2 findings taken further in [`notebooks/exploration.ipynb`](notebook
 
 ## Dashboard (Phase 4)
 
-Data prep is done: `dashboard/prepare_dashboard_data.py` builds four dashboard-ready CSVs into
-`dashboard/data/` from `netflix.db` (title-level facts, genre/country link tables, and
-person-level stats). The actual build is a GUI step in Tableau Public or Power BI — full spec for
-all 3 pages (Overview, Ratings, People), suggested filters/parameters, and how to relate the
-tables is in [`dashboard/DASHBOARD_GUIDE.md`](dashboard/DASHBOARD_GUIDE.md).
+No Tableau/Power BI — [`notebooks/dashboard.ipynb`](notebooks/dashboard.ipynb) runs each `.sql`
+file from `sql/` directly against `netflix.db` and renders the result with matplotlib, so every
+chart traces back to an actual query rather than logic re-built in a separate GUI tool. Organized
+the same way the original 3-page plan was (Overview / Ratings / People); eleven individual PNGs
+land in `dashboard/`, and six headline panels are assembled into one image:
 
-**Dashboard link:** _pending — add here once published._
+![Netflix content analysis dashboard](dashboard/dashboard.png)
+
+| Panel | Source query |
+|---|---|
+| Titles per year, by type | `sql/01_titles_by_year_and_type.sql` |
+| Top countries by title count | `sql/10_top_countries_by_title_count.sql` |
+| Top genres by IMDb rating | `sql/02_top_genres_by_rating.sql` |
+| Runtime vs. rating (movies) | `sql/05_runtime_vs_rating_correlation.sql` |
+| Movie vs. show rating | `sql/08_movie_vs_show_avg_rating.sql` |
+| Top actors by title count | `sql/03_top_prolific_actors_directors.sql` |
 
 ## Project Structure
 
@@ -79,8 +90,8 @@ netflix-content-analysis/
 ├── data/raw/           # titles.csv, credits.csv (original, untouched)
 ├── data/cleaned/        # cleaned/exploded CSVs produced by notebooks
 ├── sql/                 # analysis queries (.sql)
-├── notebooks/           # exploration.ipynb, cleaning.ipynb
-├── dashboard/           # dashboard-ready CSV extracts, build guide, Tableau/Power BI file or link
+├── notebooks/           # cleaning.ipynb, exploration.ipynb, dashboard.ipynb
+├── dashboard/           # PNGs rendered from sql/ queries (dashboard.ipynb output)
 ├── netflix.db            # SQLite database loaded from the raw CSVs
 ├── requirements.txt
 └── README.md
@@ -102,7 +113,7 @@ The SQLite database (`netflix.db`) is built from the raw CSVs via `load_to_sqlit
 - [x] Phase 1 — Data cleaning (genre/country explode, null handling, dedupe, decade column)
 - [x] Phase 2 — SQL analysis (10 queries)
 - [x] Phase 3 — Pandas deep-dive (stats tests, time series, actor network)
-- [ ] Phase 4 — Dashboard (data prep done; Tableau/Power BI build & publish pending)
+- [x] Phase 4 — Dashboard (SQL-driven, matplotlib — no BI tool)
 - [ ] Phase 5 — Write-up (findings, methodology, caveats)
 
 ## Caveats
