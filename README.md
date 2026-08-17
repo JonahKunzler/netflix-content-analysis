@@ -3,7 +3,7 @@
 An end-to-end analysis of Netflix's catalog (titles + credits) to explore content trends,
 ratings, genres, countries, and cast/crew performance — using pandas, SQL, and a BI dashboard.
 
-**Status:** Phases 0–2 (setup, cleaning, SQL analysis) complete. Deep-dive and dashboard phases in progress.
+**Status:** Phases 0–3 (setup, cleaning, SQL analysis, pandas deep-dive) complete. Dashboard and write-up phases in progress.
 
 ## Data Source
 
@@ -44,6 +44,23 @@ run against the cleaned tables in `netflix.db`. A few standout findings:
 | 07 | Top directors (3+ titles) | Kim Won-seok (8.43), Christopher Nolan (8.33), Martin Scorsese (8.16) |
 | 08 | Movies vs. shows avg rating | Shows outrate movies on both IMDb (6.98 vs 6.25) and TMDb (7.48 vs 6.46) — tested for significance in Phase 3 |
 
+## Pandas Deep Dive (Phase 3)
+
+Three Phase 2 findings taken further in [`notebooks/exploration.ipynb`](notebooks/exploration.ipynb):
+
+1. **Is the movie-vs-show rating gap real?** Welch's t-test on IMDb scores (shows n=1,939 vs.
+   movies n=3,429): t=23.48, p≈1.2e-114, Cohen's d=0.66. The gap is both statistically
+   significant and a genuine medium-to-large effect — not just "significant because the sample
+   is huge."
+2. **Genre trends by year (2000+, top 6 genres).** All genres ramp sharply from the mid-2010s
+   (Netflix's original-content push); drama and comedy stay the two largest throughout.
+   Caveat: this tracks production year, not the year a title was added to Netflix.
+3. **Actor co-starring network** (top-10-billed cast per title, to keep this about leads rather
+   than ensemble/background credits). 148,341 unique pairs. The densest clusters are complete
+   cliques from specific troupes/shows — all 6 Monty Python members are paired with each other
+   11-14 times each; the *Trailer Park Boys* core cast forms a separate clique — rather than one
+   broadly interconnected cast network. Full pair list: `data/cleaned/actor_costar_pairs.csv`.
+
 ## Project Structure
 
 ```
@@ -73,7 +90,7 @@ The SQLite database (`netflix.db`) is built from the raw CSVs via `load_to_sqlit
 - [x] Phase 0 — Repo setup, raw data loaded into SQLite
 - [x] Phase 1 — Data cleaning (genre/country explode, null handling, dedupe, decade column)
 - [x] Phase 2 — SQL analysis (10 queries)
-- [ ] Phase 3 — Pandas deep-dive (stats tests, time series, actor network)
+- [x] Phase 3 — Pandas deep-dive (stats tests, time series, actor network)
 - [ ] Phase 4 — Dashboard (Tableau/Power BI)
 - [ ] Phase 5 — Write-up (findings, methodology, caveats)
 
