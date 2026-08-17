@@ -3,7 +3,8 @@
 An end-to-end analysis of Netflix's catalog (titles + credits) to explore content trends,
 ratings, genres, countries, and cast/crew performance — using pandas, SQL, and a BI dashboard.
 
-**Status:** Phases 0–3 (setup, cleaning, SQL analysis, pandas deep-dive) complete. Dashboard and write-up phases in progress.
+**Status:** Phases 0–3 (setup, cleaning, SQL analysis, pandas deep-dive) complete. Phase 4 data
+prep done, dashboard build/publish pending. Write-up in progress.
 
 ## Data Source
 
@@ -61,6 +62,16 @@ Three Phase 2 findings taken further in [`notebooks/exploration.ipynb`](notebook
    11-14 times each; the *Trailer Park Boys* core cast forms a separate clique — rather than one
    broadly interconnected cast network. Full pair list: `data/cleaned/actor_costar_pairs.csv`.
 
+## Dashboard (Phase 4)
+
+Data prep is done: `dashboard/prepare_dashboard_data.py` builds four dashboard-ready CSVs into
+`dashboard/data/` from `netflix.db` (title-level facts, genre/country link tables, and
+person-level stats). The actual build is a GUI step in Tableau Public or Power BI — full spec for
+all 3 pages (Overview, Ratings, People), suggested filters/parameters, and how to relate the
+tables is in [`dashboard/DASHBOARD_GUIDE.md`](dashboard/DASHBOARD_GUIDE.md).
+
+**Dashboard link:** _pending — add here once published._
+
 ## Project Structure
 
 ```
@@ -69,7 +80,7 @@ netflix-content-analysis/
 ├── data/cleaned/        # cleaned/exploded CSVs produced by notebooks
 ├── sql/                 # analysis queries (.sql)
 ├── notebooks/           # exploration.ipynb, cleaning.ipynb
-├── dashboard/           # Tableau/Power BI file or link
+├── dashboard/           # dashboard-ready CSV extracts, build guide, Tableau/Power BI file or link
 ├── netflix.db            # SQLite database loaded from the raw CSVs
 ├── requirements.txt
 └── README.md
@@ -91,7 +102,7 @@ The SQLite database (`netflix.db`) is built from the raw CSVs via `load_to_sqlit
 - [x] Phase 1 — Data cleaning (genre/country explode, null handling, dedupe, decade column)
 - [x] Phase 2 — SQL analysis (10 queries)
 - [x] Phase 3 — Pandas deep-dive (stats tests, time series, actor network)
-- [ ] Phase 4 — Dashboard (Tableau/Power BI)
+- [ ] Phase 4 — Dashboard (data prep done; Tableau/Power BI build & publish pending)
 - [ ] Phase 5 — Write-up (findings, methodology, caveats)
 
 ## Caveats
